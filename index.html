@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>午餐時光機 - 互動投票牆</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎒 午餐時光機：童年惡夢大投票</h1>
+        <p class="subtitle">選出當年最讓你痛苦的那道「營養午餐魔王」！</p>
+
+        <div class="vote-container">
+            <!-- 選項 1：三色豆（換成你自己的照片） -->
+            <div class="vote-card">
+                <img src="images/beans.jpg" alt="三色豆">
+                <h3>🟢 三色豆</h3>
+                <p>紅蘿蔔 + 青豆 + 玉米，永遠的三角噩夢</p>
+                <span class="count" id="count1">0 票</span>
+                <button class="vote-btn" onclick="vote(1)">我也吃過這苦 (+1)</button>
+            </div>
+
+            <!-- 選項 2：螢光咖哩（換成你自己的照片） -->
+            <div class="vote-card">
+                <img src="images/curry.jpg" alt="螢光咖哩">
+                <h3>🟡 螢光咖哩</h3>
+                <p>神祕黃色勾芡，永遠撈不到肉塊</p>
+                <span class="count" id="count2">0 票</span>
+                <button class="vote-btn" onclick="vote(2)">這真的母湯 (+1)</button>
+            </div>
+
+            <!-- 選項 3：電話線（換成你自己的照片） -->
+            <div class="vote-card">
+                <img src="images/kelp.jpg" alt="電話線">
+                <h3>🔵 電話線</h3>
+                <p>軟爛海帶結，咬不斷又神祕</p>
+                <span class="count" id="count3">0 票</span>
+                <button class="vote-btn" onclick="vote(3)">陰影面積極大 (+1)</button>
+            </div>
+        </div>
+
+        <!-- 歸零按鈕區域 -->
+        <div class="reset-container">
+            <button class="reset-btn" onclick="resetVotes()">🔄 重新歸零票數</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
