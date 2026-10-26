@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>午餐時光機：童年惡夢大投票</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fdfbf7;
+            color: #4a3e3d;
+        }
+        .chalkboard-bg {
+            background-color: #2b4c3f;
+            background-image: radial-gradient(#3a6352 15%, transparent 16%);
+            background-size: 20px 20px;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+        .vote-btn-active:active {
+            transform: scale(0.95);
+        }
+        .bar-transition {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- 頂部標題列 -->
+    <header class="bg-amber-500 text-white py-6 px-4 shadow-md text-center relative overflow-hidden">
+        <div class="absolute -left-4 -top-4 opacity-20 text-7xl"><i class="fa-solid fa-utensils"></i></div>
+        <div class="absolute -right-4 -bottom-4 opacity-20 text-7xl"><i class="fa-solid fa-apple-whole"></i></div>
+        <div class="max-w-4xl mx-auto relative z-10">
+            <span class="inline-block bg-amber-600 text-amber-100 text-xs md:text-sm px-3 py-1 rounded-full font-bold mb-2">
+                🎒 第一展區：午餐時光機 · 互動破冰
+            </span>
+            <h1 class="text-2xl md:text-4xl font-extrabold tracking-wide">🍱 童年惡夢大投票</h1>
+            <p class="text-amber-100 text-sm md:text-base mt-1">選出當年最讓你痛苦的那道「營養午餐魔王」！</p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- 左側/上方：動態長條圖總表 (即時排行榜，可折疊) -->
+        <section class="lg:col-span-5 bg-white p-5 rounded-2xl border-2 border-amber-200 card-shadow h-fit sticky top-4 z-20">
+            <div class="flex items-center justify-between pb-3 border-b border-amber-100">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-amber-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-amber-500"></i> 即時投票總表
+                    </h2>
+                    <span id="total-votes-badge" class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                        總票數: 0 票
+                    </span>
+                </div>
+                <!-- 折疊/展開切換按鈕 -->
+                <button onclick="toggleChartVisibility()" id="toggle-chart-btn" title="切換收合" class="text-gray-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 p-2 rounded-xl transition flex items-center gap-1 text-xs font-bold">
+                    <span id="toggle-text">收合</span>
+                    <i id="toggle-icon" class="fa-solid fa-chevron-up"></i>
+                </button>
+            </div>
+
+            <!-- 可收合區塊 -->
+            <div id="chart-content" class="transition-all duration-300 overflow-hidden max-h-[70vh] overflow-y-auto pr-1 mt-4">
+                <!-- 自訂動態長條圖列表 -->
+                <div id="chart-list" class="space-y-4">
+                    <!-- 動態由 JS 渲染長條圖 -->
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-400 text-center flex justify-between items-center">
+                    <span><i class="fa-solid fa-rotate text-amber-400"></i> 即時連線同步中</span>
+                    <button onclick="openAdminModal()" class="text-gray-400 hover:text-amber-600 transition flex items-center gap-1">
+                        <i class="fa-solid fa-lock"></i> 管理者後台
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 右側/下方：食物卡片投票區 -->
+        <section class="lg:col-span-7">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-700">點擊下方按鈕投下痛苦一票 (+1)：</h2>
+                <span class="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">可複選投票</span>
+            </div>
+
+            <!-- 食物卡片 Grid -->
+            <div id="food-cards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <!-- 動態由 JS 渲染卡片 -->
+            </div>
+
+            <!-- 新增：觀眾惡夢白板 / 許願留言專區 -->
+            <div class="mt-10 bg-amber-50/60 p-6 rounded-2xl border-2 border-dashed border-amber-300 relative">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-amber-200/60">
+                    <h3 class="text-lg font-bold text-amber-900 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-amber-600"></i> 惡夢遺珠白板（現場許願牆）
+                    </h3>
+                    <span class="text-xs text-amber-700 font-medium">沒有你的惡夢菜色？在此留言寫下！</span>
+                </div>
+
+                <!-- 留言 / 許願輸入表單 -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-amber-200 mb-6 space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <input type="text" id="wish-food-name" placeholder="惡夢菜色名稱（例：螢光紅醬、甜玉米湯）" class="col-span-1 md:col-span-2 text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400">
+                        <input type="text" id="wish-author" placeholder="你的暱稱/稱呼（選填）" class="col-span-1 text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    </div>
+                    <textarea id="wish-food-desc" rows="2" placeholder="寫下這道菜當年帶給你的痛苦回憶或口感描述..." class="w-full text-xs p-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"></textarea>
+                    <button onclick="submitWishItem()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg text-xs shadow transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> 釘上惡夢白板
+                    </button>
+                </div>
+
+                <!-- 白板許願留言清單 (貼紙風) -->
+                <div id="wishboard-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- 動態由 JS 渲染白板便條紙 -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 管理者密碼驗證 / 後台控制 Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-2 border-amber-400 relative my-8">
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+            
+            <!-- 階段 1: 密碼輸入 -->
+            <div id="admin-auth-step">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">展場管理者登入</h3>
+                    <p class="text-xs text-gray-500 mt-1">請輸入展場控制密碼（預設密碼：<code class="bg-gray-100 px-1 py-0.5 rounded text-amber-700">admin</code>）</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="password" id="admin-pass-input" placeholder="請輸入後台密碼" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-center text-lg tracking-widest">
+                    <p id="auth-error-msg" class="text-xs text-red-500 text-center hidden">⚠️ 密碼錯誤，請再試一次！</p>
+                    <button onclick="verifyAdminPassword()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-md transition">
+                        驗證登入
+                    </button>
+                </div>
+            </div>
+
+            <!-- 階段 2: 後台控制面板 (預設隱藏) -->
+            <div id="admin-panel-step" class="hidden">
+                <div class="flex items-center justify-between pb-3 mb-4 border-b">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-amber-500"></i> 後台數據與菜色管理
+                    </h3>
+                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">已驗證</span>
+                </div>
+
+                <!-- 頁籤切換：菜色增刪與圖片 / 票數微調 -->
+                <div class="flex border-b mb-4">
+                    <button id="tab-manage-btn" onclick="switchAdminTab('manage')" class="flex-1 py-2 font-bold text-xs md:text-sm text-amber-600 border-b-2 border-amber-500">
+                        <i class="fa-solid fa-utensils mr-1"></i> 菜色管理
+                    </button>
+                    <button id="tab-votes-btn" onclick="switchAdminTab('votes')" class="flex-1 py-2 font-bold text-xs md:text-sm text-gray-400 border-b-2 border-transparent hover:text-gray-600">
+                        <i class="fa-solid fa-calculator mr-1"></i> 票數微調
+                    </button>
+                    <button id="tab-wishes-btn" onclick="switchAdminTab('wishes')" class="flex-1 py-2 font-bold text-xs md:text-sm text-gray-400 border-b-2 border-transparent hover:text-gray-600">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> 白板許願審核
+                    </button>
+                </div>
+
+                <!-- 分頁 1: 菜色管理 (新增、刪除、編輯圖片) -->
+                <div id="admin-tab-manage" class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                    
+                    <!-- 新增菜色表單區塊 -->
+                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                        <h4 class="font-bold text-amber-900 text-sm mb-3 flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus-circle text-amber-600"></i> 新增菜色項目
+                        </h4>
+                        <div class="space-y-3 text-xs">
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="text" id="new-food-name" placeholder="菜色名稱 (例如：香菇肉羹)" class="col-span-2 p-2 border rounded-lg focus:ring-1 focus:ring-amber-500 outline-none">
+                                <div class="flex items-center gap-1 bg-white p-1 border rounded-lg">
+                                    <label class="text-gray-500 text-[10px]">代表色:</label>
+                                    <input type="color" id="new-food-color" value="#f59e0b" class="w-full h-6 cursor-pointer border-0 bg-transparent">
+                                </div>
+                            </div>
+                            <input type="text" id="new-food-desc" placeholder="菜色描述 (例如：滑溜口感，勾芡超濃密)" class="w-full p-2 border rounded-lg focus:ring-1 focus:ring-amber-500 outline-none">
+                            
+                            <!-- 圖片選項 -->
+                            <div class="space-y-1.5">
+                                <label class="block text-gray-600 font-bold">圖片設置 (上傳照片 或 輸入網址)：</label>
+                                <div class="flex gap-2 items-center">
+                                    <label class="cursor-pointer bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 font-bold">
+                                        <i class="fa-solid fa-upload text-amber-500"></i> 選擇檔案
+                                        <input type="file" id="new-food-file" accept="image/*" class="hidden" onchange="handleNewImageSelect(event)">
+                                    </label>
+                                    <span id="new-file-name" class="text-gray-400 text-[10px] truncate max-w-[150px]">未選擇檔案</span>
+                                </div>
+                                <input type="text" id="new-food-url" placeholder="或輸入圖片網址 https://..." class="w-full p-2 border rounded-lg focus:ring-1 focus:ring-amber-500 outline-none">
+                            </div>
+
+                            <button onclick="addNewFoodItem()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg shadow transition text-xs flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-check"></i> 確認新增菜色
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 現有菜色清單 (可刪除 / 修改圖片) -->
+                    <div>
+                        <h4 class="font-bold text-gray-700 text-xs mb-2 flex items-center justify-between">
+                            <span>既有菜色清單 (共 <span id="food-count-badge">0</span> 項)</span>
+                            <span class="text-[10px] text-gray-400">刪除後該菜色資料與票數將移除</span>
+                        </h4>
+                        <div id="admin-manage-list" class="space-y-3"></div>
+                    </div>
+
+                </div>
+
+                <!-- 分頁 2: 票數微調 -->
+                <div id="admin-tab-votes" class="hidden space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                    <div id="admin-food-list" class="space-y-2"></div>
+                </div>
+
+                <!-- 分頁 3: 白板許願審核與一鍵轉為正式菜色 -->
+                <div id="admin-tab-wishes" class="hidden space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                    <p class="text-xs text-gray-500 mb-2">您可以查看現場觀眾的惡夢留言，並支援一鍵將其「晉升」為正式投票菜色！</p>
+                    <div id="admin-wish-list" class="space-y-2"></div>
+                </div>
+
+                <div class="space-y-2 border-t pt-4 mt-4">
+                    <div class="flex gap-2">
+                        <button onclick="resetAllVotesConfirm()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-xl shadow transition flex items-center justify-center gap-1 text-xs">
+                            <i class="fa-solid fa-rotate-left"></i> 票數歸零
+                        </button>
+                        <button onclick="restoreInitialFoodsConfirm()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded-xl shadow transition flex items-center justify-center gap-1 text-xs">
+                            <i class="fa-solid fa-trash-arrow-up"></i> 重置為預設菜色
+                        </button>
+                    </div>
+                    <button onclick="exportCSV()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-xl transition text-xs flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> 匯出數據報表 (CSV)
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // 預設菜色資料集
+        const defaultFoods = [
+            {
+                id: 'peas',
+                name: '三色豆',
+                desc: '紅蘿蔔 + 青豆 + 玉米，永遠的三角惡夢',
+                color: '#22c55e',
+                borderColor: 'border-green-200',
+                badgeColor: 'bg-green-100 text-green-800',
+                img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
+                votes: 0
+            },
+            {
+                id: 'curry',
+                name: '螢光咖哩',
+                desc: '神秘黃色勾芡，永遠撈不到肉塊',
+                color: '#eab308',
+                borderColor: 'border-yellow-200',
+                badgeColor: 'bg-yellow-100 text-yellow-800',
+                img: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?auto=format&fit=crop&w=400&q=80',
+                votes: 0
+            },
+            {
+                id: 'seaweed',
+                name: '電話線 (海帶結)',
+                desc: '軟爛海帶結，咬不斷又充滿神秘感',
+                color: '#3b82f6',
+                borderColor: 'border-blue-200',
+                badgeColor: 'bg-blue-100 text-blue-800',
+                img: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=400&q=80',
+                votes: 0
+            },
+            {
+                id: 'bitter-gourd',
+                name: '苦瓜炒蛋',
+                desc: '大人說退火，小孩吃到流眼淚的極致苦味',
+                color: '#10b981',
+                borderColor: 'border-emerald-200',
+                badgeColor: 'bg-emerald-100 text-emerald-800',
+                img: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=400&q=80',
+                votes: 0
+            },
+            {
+                id: 'eggplant',
+                name: '紫色茄子',
+                desc: '煮到爛爛變紫黑色的神秘口感黏稠物',
+                color: '#a855f7',
+                borderColor: 'border-purple-200',
+                badgeColor: 'bg-purple-100 text-purple-800',
+                img: 'https://images.unsplash.com/photo-1528137871618-79d2761e3fd5?auto=format&fit=crop&w=400&q=80',
+                votes: 0
+            },
+            {
+                id: 'steamed-fish',
+                name: '冷掉蒸魚',
+                desc: '帶有腥味又充滿細刺，夾一塊像在抽籤',
+                color: '#06b6d4',
+                borderColor: 'border-cyan-200',
+                badgeColor: 'bg-cyan-100 text-cyan-800',
+                img: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=400&q=80',
+                votes: 0
+            }
+        ];
+
+        let foodsData = [];
+        let wishBoardData = []; // 白板許願資料
+        let isChartVisible = true;
+        let tempUploadedBase64 = ''; // 暫存新增菜色時上傳的 Base64 圖片
+
+        // 初始化：讀取 LocalStorage 或預設值
+        function initData() {
+            const saved = localStorage.getItem('lunch_exhibition_votes');
+            if (saved) {
+                try {
+                    foodsData = JSON.parse(saved);
+                } catch (e) {
+                    foodsData = JSON.parse(JSON.stringify(defaultFoods));
+                }
+            } else {
+                foodsData = JSON.parse(JSON.stringify(defaultFoods));
+            }
+
+            // 讀取白板許願資料
+            const savedWishes = localStorage.getItem('lunch_exhibition_wishes');
+            if (savedWishes) {
+                try {
+                    wishBoardData = JSON.parse(savedWishes);
+                } catch (e) {
+                    wishBoardData = [];
+                }
+            } else {
+                wishBoardData = [
+                    { id: 'w1', name: '螢光紅醬義大利麵', author: '小明', desc: '甜甜鹹鹹紅紅的神秘醬汁，每次吃完衣服都洗不掉', likes: 3 },
+                    { id: 'w2', name: '炸土豆條（軟爛版）', author: '隔壁班小華', desc: '完全不脆，吸滿油的濕軟馬鈴薯塊', likes: 1 }
+                ];
+            }
+
+            renderAll();
+        }
+
+        // 儲存資料至 LocalStorage
+        function saveData() {
+            localStorage.setItem('lunch_exhibition_votes', JSON.stringify(foodsData));
+            localStorage.setItem('lunch_exhibition_wishes', JSON.stringify(wishBoardData));
+        }
+
+        // 切換圖表隱藏/顯示
+        function toggleChartVisibility() {
+            isChartVisible = !isChartVisible;
+            const contentEl = document.getElementById('chart-content');
+            const textEl = document.getElementById('toggle-text');
+            const iconEl = document.getElementById('toggle-icon');
+
+            if (isChartVisible) {
+                contentEl.classList.remove('hidden');
+                textEl.textContent = '收合';
+                iconEl.className = 'fa-solid fa-chevron-up';
+            } else {
+                contentEl.classList.add('hidden');
+                textEl.textContent = '展開';
+                iconEl.className = 'fa-solid fa-chevron-down';
+            }
+        }
+
+        // 計算總票數
+        function getTotalVotes() {
+            return foodsData.reduce((sum, item) => sum + item.votes, 0);
+        }
+
+        // 進行投票 (+1)
+        function vote(id) {
+            const food = foodsData.find(f => f.id === id);
+            if (food) {
+                food.votes += 1;
+                saveData();
+                renderAll();
+
+                // 播放卡片跳動視覺效果
+                const cardEl = document.getElementById(`card-${id}`);
+                if (cardEl) {
+                    cardEl.classList.add('scale-105', 'ring-2', 'ring-amber-400');
+                    setTimeout(() => {
+                        cardEl.classList.remove('scale-105', 'ring-2', 'ring-amber-400');
+                    }, 200);
+                }
+            }
+        }
+
+        // 渲染整體畫面
+        function renderAll() {
+            const totalVotes = getTotalVotes();
+            document.getElementById('total-votes-badge').textContent = `總票數: ${totalVotes} 票`;
+
+            // 渲染右側卡片區
+            const cardsContainer = document.getElementById('food-cards-container');
+            if (foodsData.length === 0) {
+                cardsContainer.innerHTML = `<div class="col-span-2 text-center py-12 text-gray-400">目前沒有任何菜色，請至管理者後台新增菜色。</div>`;
+            } else {
+                cardsContainer.innerHTML = foodsData.map(item => `
+                    <div id="card-${item.id}" class="bg-white border-2 border-amber-100 rounded-2xl p-4 card-shadow flex flex-col justify-between transition-all duration-300 hover:-translate-y-1">
+                        <div>
+                            <div class="relative overflow-hidden rounded-xl h-36 mb-3 bg-gray-100">
+                                <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x250/f59e0b/ffffff?text=${encodeURIComponent(item.name)}'">
+                                <span class="absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 shadow-sm">
+                                    ${item.votes} 票
+                                </span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full inline-block" style="background-color:${item.color || '#f59e0b'}"></span>
+                                ${item.name}
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-1 leading-relaxed">${item.desc || '無描述'}</p>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xl font-extrabold text-amber-600">${item.votes} <span class="text-xs text-gray-400 font-normal">票</span></span>
+                            <button onclick="vote('${item.id}')" class="vote-btn-active bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-xs"></i> 我也吃過這苦
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 渲染左側長條圖總表
+            const sortedData = [...foodsData].sort((a, b) => b.votes - a.votes);
+            const maxVotes = Math.max(...foodsData.map(f => f.votes), 1);
+
+            const chartList = document.getElementById('chart-list');
+            if (sortedData.length === 0) {
+                chartList.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">尚無數據</p>`;
+            } else {
+                chartList.innerHTML = sortedData.map((item, index) => {
+                    const percentage = totalVotes > 0 ? ((item.votes / totalVotes) * 100).toFixed(1) : 0;
+                    const barWidth = totalVotes > 0 ? Math.max((item.votes / maxVotes) * 100, 2) : 0;
+                    const isTop = index === 0 && item.votes > 0;
+
+                    return `
+                        <div>
+                            <div class="flex justify-between items-center text-xs font-bold mb-1">
+                                <span class="flex items-center gap-1.5 text-gray-700">
+                                    ${isTop ? '👑' : `<span class="text-gray-400 w-4">${index + 1}.</span>`}
+                                    ${item.name}
+                                </span>
+                                <span class="text-gray-500">${item.votes} 票 (${percentage}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-100 h-3.5 rounded-full overflow-hidden p-0.5 border border-gray-200">
+                                <div class="h-full rounded-full bar-transition" style="width: ${barWidth}%; background-color: ${item.color || '#f59e0b'};"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 渲染惡夢白板留言牆
+            renderWishBoard();
+        }
+
+        // 渲染惡夢白板便條
+        function renderWishBoard() {
+            const container = document.getElementById('wishboard-container');
+            if (!container) return;
+
+            if (wishBoardData.length === 0) {
+                container.innerHTML = `<div class="col-span-2 text-center text-xs text-gray-400 py-6">白板目前空空如也，快來留下第一個惡夢菜色！</div>`;
+                return;
+            }
+
+            const bgColors = ['bg-amber-100/90', 'bg-yellow-100/90', 'bg-orange-100/90', 'bg-lime-100/90'];
+
+            container.innerHTML = wishBoardData.map((item, idx) => {
+                const colorBg = bgColors[idx % bgColors.length];
+                return `
+                    <div class="${colorBg} p-3.5 rounded-xl border border-amber-200/80 shadow-sm relative flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start gap-1 mb-1.5">
+                                <span class="font-bold text-gray-800 text-sm flex items-center gap-1">
+                                    📌 ${item.name}
+                                </span>
+                                <span class="text-[10px] text-amber-800 font-bold bg-amber-200/60 px-1.5 py-0.5 rounded">
+                                    ${item.author ? item.author : '熱心觀眾'}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-600 leading-relaxed">${item.desc || '（未提供詳細描述）'}</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-amber-200/50 flex justify-between items-center text-xs">
+                            <span class="text-[10px] text-gray-500">認同度：<strong class="text-amber-700 text-xs">${item.likes || 0}</strong> 人同感</span>
+                            <button onclick="likeWishItem('${item.id}')" class="bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-thumbs-up text-amber-500"></i> +1 同感
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 提交許願白板留言
+        function submitWishItem() {
+            const nameInput = document.getElementById('wish-food-name');
+            const authorInput = document.getElementById('wish-author');
+            const descInput = document.getElementById('wish-food-desc');
+
+            const name = nameInput.value.trim();
+            const author = authorInput.value.trim();
+            const desc = descInput.value.trim();
+
+            if (!name) {
+                alert("⚠️ 請輸入遺珠菜色名稱！");
+                return;
+            }
+
+            const newWish = {
+                id: 'wish_' + Date.now(),
+                name: name,
+                author: author || '熱心觀眾',
+                desc: desc || '無描述',
+                likes: 1
+            };
+
+            wishBoardData.unshift(newWish);
+            saveData();
+            renderWishBoard();
+
+            // 清空輸入
+            nameInput.value = '';
+            authorInput.value = '';
+            descInput.value = '';
+
+            alert(`✅ 已成功將「${name}」貼上惡夢白板！`);
+        }
+
+        // 白板點讚 / 同感
+        function likeWishItem(wishId) {
+            const wish = wishBoardData.find(w => w.id === wishId);
+            if (wish) {
+                wish.likes = (wish.likes || 0) + 1;
+                saveData();
+                renderWishBoard();
+            }
+        }
+
+        // --- 管理者後台模態框邏輯 ---
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+            document.getElementById('admin-auth-step').classList.remove('hidden');
+            document.getElementById('admin-panel-step').classList.add('hidden');
+            document.getElementById('admin-pass-input').value = '';
+            document.getElementById('auth-error-msg').classList.add('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+        }
+
+        function verifyAdminPassword() {
+            const input = document.getElementById('admin-pass-input').value;
+            if (input === 'admin' || input === '8888') {
+                document.getElementById('admin-auth-step').classList.add('hidden');
+                document.getElementById('admin-panel-step').classList.remove('hidden');
+                switchAdminTab('manage');
+            } else {
+                document.getElementById('auth-error-msg').classList.remove('hidden');
+            }
+        }
+
+        // 切換後台分頁
+        function switchAdminTab(tab) {
+            const manageTab = document.getElementById('admin-tab-manage');
+            const votesTab = document.getElementById('admin-tab-votes');
+            const wishesTab = document.getElementById('admin-tab-wishes');
+
+            const manageBtn = document.getElementById('tab-manage-btn');
+            const votesBtn = document.getElementById('tab-votes-btn');
+            const wishesBtn = document.getElementById('tab-wishes-btn');
+
+            manageTab.classList.add('hidden');
+            votesTab.classList.add('hidden');
+            wishesTab.classList.add('hidden');
+
+            manageBtn.className = "flex-1 py-2 font-bold text-xs md:text-sm text-gray-400 border-b-2 border-transparent hover:text-gray-600";
+            votesBtn.className = "flex-1 py-2 font-bold text-xs md:text-sm text-gray-400 border-b-2 border-transparent hover:text-gray-600";
+            wishesBtn.className = "flex-1 py-2 font-bold text-xs md:text-sm text-gray-400 border-b-2 border-transparent hover:text-gray-600";
+
+            if (tab === 'manage') {
+                manageTab.classList.remove('hidden');
+                manageBtn.className = "flex-1 py-2 font-bold text-xs md:text-sm text-amber-600 border-b-2 border-amber-500";
+                renderAdminManageList();
+            } else if (tab === 'votes') {
+                votesTab.classList.remove('hidden');
+                votesBtn.className = "flex-1 py-2 font-bold text-xs md:text-sm text-amber-600 border-b-2 border-amber-500";
+                renderAdminVotesList();
+            } else if (tab === 'wishes') {
+                wishesTab.classList.remove('hidden');
+                wishesBtn.className = "flex-1 py-2 font-bold text-xs md:text-sm text-amber-600 border-b-2 border-amber-500";
+                renderAdminWishesList();
+            }
+        }
+
+        // 渲染「白板審核」後台列表
+        function renderAdminWishesList() {
+            const container = document.getElementById('admin-wish-list');
+            if (wishBoardData.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">目前沒有許願留言</p>`;
+                return;
+            }
+
+            container.innerHTML = wishBoardData.map(item => `
+                <div class="bg-gray-50 p-3 rounded-xl border text-xs space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-gray-800 text-sm">📌 ${item.name}</span>
+                        <div class="flex gap-1">
+                            <button onclick="promoteWishToFood('${item.id}')" class="text-green-700 bg-green-100 hover:bg-green-200 px-2 py-1 rounded font-bold transition">
+                                <i class="fa-solid fa-arrow-up-from-bracket"></i> 轉為正式菜色
+                            </button>
+                            <button onclick="deleteWishItem('${item.id}')" class="text-red-500 bg-red-50 hover:bg-red-100 px-2 py-1 rounded font-bold transition">
+                                <i class="fa-solid fa-trash"></i> 刪除
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">${item.desc}</p>
+                    <div class="flex justify-between text-[10px] text-gray-400">
+                        <span>留言者: ${item.author}</span>
+                        <span>同感數: ${item.likes || 0}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 後台刪除許願白板留言
+        function deleteWishItem(wishId) {
+            wishBoardData = wishBoardData.filter(w => w.id !== wishId);
+            saveData();
+            renderWishBoard();
+            renderAdminWishesList();
+        }
+
+        // 將許願白板項目一鍵轉為正式投票菜色
+        function promoteWishToFood(wishId) {
+            const wish = wishBoardData.find(w => w.id === wishId);
+            if (!wish) return;
+
+            const newFood = {
+                id: 'food_' + Date.now(),
+                name: wish.name,
+                desc: wish.desc || '來自觀眾現場許願白板',
+                color: '#f59e0b',
+                img: 'https://placehold.co/400x250/f59e0b/ffffff?text=' + encodeURIComponent(wish.name),
+                votes: wish.likes || 1
+            };
+
+            foodsData.push(newFood);
+            wishBoardData = wishBoardData.filter(w => w.id !== wishId);
+            saveData();
+            renderAll();
+            renderAdminWishesList();
+
+            alert(`✅ 已成功將「${wish.name}」升格為正式投票菜色！`);
+        }
+
+        // 處理「新增菜色」暫存圖片
+        function handleNewImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            document.getElementById('new-file-name').textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempUploadedBase64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 新增菜色
+        function addNewFoodItem() {
+            const name = document.getElementById('new-food-name').value.trim();
+            const desc = document.getElementById('new-food-desc').value.trim();
+            const color = document.getElementById('new-food-color').value;
+            const urlInput = document.getElementById('new-food-url').value.trim();
+
+            if (!name) {
+                alert("⚠️ 請輸入菜色名稱！");
+                return;
+            }
+
+            // 優先選用上傳圖片，次之為 URL，無輸入則使用預設占位圖
+            let finalImg = 'https://placehold.co/400x250/f59e0b/ffffff?text=' + encodeURIComponent(name);
+            if (tempUploadedBase64) {
+                finalImg = tempUploadedBase64;
+            } else if (urlInput) {
+                finalImg = urlInput;
+            }
+
+            const newFood = {
+                id: 'food_' + Date.now(),
+                name: name,
+                desc: desc || '無描述',
+                color: color,
+                img: finalImg,
+                votes: 0
+            };
+
+            foodsData.push(newFood);
+            saveData();
+            renderAll();
+            renderAdminManageList();
+
+            // 清空表單
+            document.getElementById('new-food-name').value = '';
+            document.getElementById('new-food-desc').value = '';
+            document.getElementById('new-food-url').value = '';
+            document.getElementById('new-food-file').value = '';
+            document.getElementById('new-file-name').textContent = '未選擇檔案';
+            tempUploadedBase64 = '';
+
+            alert(`✅ 已順利新增菜色：「${name}」！`);
+        }
+
+        // 刪除菜色
+        function deleteFoodItem(foodId) {
+            const food = foodsData.find(f => f.id === foodId);
+            if (!food) return;
+
+            if (confirm(`⚠️ 確定要刪除菜色「${food.name}」嗎？相關投票數據將一併刪除！`)) {
+                foodsData = foodsData.filter(f => f.id !== foodId);
+                saveData();
+                renderAll();
+                renderAdminManageList();
+            }
+        }
+
+        // 渲染「菜色管理」列表
+        function renderAdminManageList() {
+            document.getElementById('food-count-badge').textContent = foodsData.length;
+            const container = document.getElementById('admin-manage-list');
+            
+            container.innerHTML = foodsData.map(item => `
+                <div class="bg-gray-50 p-3 rounded-xl border text-xs space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-gray-800 flex items-center gap-2 text-sm">
+                            <span class="w-3 h-3 rounded-full" style="background-color:${item.color || '#f59e0b'}"></span>
+                            ${item.name}
+                        </span>
+                        <button onclick="deleteFoodItem('${item.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg font-bold flex items-center gap-1 transition">
+                            <i class="fa-solid fa-trash-can"></i> 刪除
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <img src="${item.img}" class="w-12 h-12 object-cover rounded-lg border bg-gray-200" onerror="this.src='https://placehold.co/100x100?text=Error'">
+                        <div class="flex-1 space-y-1">
+                            <label class="block cursor-pointer bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold py-1 px-2 rounded text-center transition">
+                                <i class="fa-solid fa-upload text-amber-500 mr-1"></i> 更換照片
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpdate(event, '${item.id}')">
+                            </label>
+                            <input type="text" value="${item.img.startsWith('data:image') ? '[自訂已上傳照片]' : item.img}" 
+                                onchange="updateImageUrl('${item.id}', this.value)"
+                                placeholder="或圖片網址 https://..." 
+                                class="w-full px-2 py-1 border rounded bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染「票數微調」列表
+        function renderAdminVotesList() {
+            const container = document.getElementById('admin-food-list');
+            container.innerHTML = foodsData.map(item => `
+                <div class="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg border text-sm">
+                    <span class="font-bold text-gray-700 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background-color:${item.color || '#f59e0b'}"></span>
+                        ${item.name}
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="adjustVotes('${item.id}', -1)" class="w-7 h-7 bg-white border border-gray-300 rounded font-bold text-gray-600 hover:bg-gray-100">-</button>
+                        <span class="w-8 text-center font-bold text-amber-600">${item.votes}</span>
+                        <button onclick="adjustVotes('${item.id}', 1)" class="w-7 h-7 bg-white border border-gray-300 rounded font-bold text-gray-600 hover:bg-gray-100">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 處理單一菜色更換圖片上傳
+        function handleImageUpdate(event, foodId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Img = e.target.result;
+                const food = foodsData.find(f => f.id === foodId);
+                if (food) {
+                    food.img = base64Img;
+                    saveData();
+                    renderAll();
+                    renderAdminManageList();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateImageUrl(foodId, url) {
+            if (url === '[自訂已上傳照片]' || !url.trim()) return;
+            const food = foodsData.find(f => f.id === foodId);
+            if (food) {
+                food.img = url.trim();
+                saveData();
+                renderAll();
+                renderAdminManageList();
+            }
+        }
+
+        function adjustVotes(id, delta) {
+            const food = foodsData.find(f => f.id === id);
+            if (food) {
+                food.votes = Math.max(0, food.votes + delta);
+                saveData();
+                renderAll();
+                renderAdminVotesList();
+            }
+        }
+
+        // 一鍵歸零所有票數
+        function resetAllVotesConfirm() {
+            if (confirm("⚠️ 確定要將所有菜色的投票票數歸零嗎？此動作無法復原！")) {
+                foodsData.forEach(item => item.votes = 0);
+                saveData();
+                renderAll();
+                renderAdminVotesList();
+                alert("✅ 所有投票數據已歸零！");
+            }
+        }
+
+        // 重置為預設菜色清單
+        function restoreInitialFoodsConfirm() {
+            if (confirm("⚠️ 確定要恢復為系統預設的 6 道菜色嗎？這將會覆蓋您自訂新增的所有菜色與數據！")) {
+                foodsData = JSON.parse(JSON.stringify(defaultFoods));
+                saveData();
+                renderAll();
+                renderAdminManageList();
+                alert("✅ 已成功恢復預設菜色！");
+            }
+        }
+
+        // 匯出 CSV 報表
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "=== 正式菜色投票數據 ===\n";
+            csvContent += "項目ID,菜色名稱,累積票數,百分比\n";
+            const total = getTotalVotes();
+
+            foodsData.forEach(item => {
+                const pct = total > 0 ? ((item.votes / total) * 100).toFixed(2) : 0;
+                csvContent += `${item.id},${item.name},${item.votes},${pct}%\n`;
+            });
+
+            csvContent += "\n=== 現場白板許願清單 ===\n";
+            csvContent += "許願ID,菜色名稱,留言者,痛苦描述,同感數\n";
+            wishBoardData.forEach(w => {
+                csvContent += `${w.id},"${w.name}","${w.author}","${w.desc.replace(/"/g, '""')}",${w.likes || 0}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `午餐惡夢投票與白板數據_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 啟動初始化
+        window.onload = initData;
+    </script>
+</body>
+</html>
